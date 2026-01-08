@@ -213,7 +213,7 @@ spec:
                   query: sum by (model_name) (rate(vllm:request_success_total{model_name=~"$model_name"}[5m]))
                   seriesNameFormat: '{{model_name}}'
 
-    "request_success_by_reason":
+    "request_success_by_model":
       kind: Panel
       spec:
         display:
@@ -699,7 +699,7 @@ spec:
             y: 9
             width: 12
             height: 6
-            content: { $ref: '#/spec/panels/request_success_by_reason' }
+            content: { $ref: '#/spec/panels/request_success_by_model' }
 
     - kind: Grid
       spec:
