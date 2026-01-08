@@ -209,7 +209,7 @@ spec:
       kind: Panel
       spec:
         display:
-          name: Completed Requests by Finish Reason
+          name: Completed Requests by Model
         plugin:
           kind: TimeSeriesChart
           spec:
@@ -225,8 +225,8 @@ spec:
                   datasource:
                     kind: PrometheusDatasource
                     name: prometheus
-                  query: sum by (finished_reason) (rate(vllm:request_success_total{model_name=~"$model_name"}[5m]))
-                  seriesNameFormat: '{{finished_reason}}'
+                  query: sum by (model_name) (rate(vllm:request_success_total{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}}'
 
     # ===== LATENCY METRICS =====
     "latency_p50":
@@ -441,6 +441,180 @@ spec:
                     sum(increase(vllm:request_generation_tokens_count{model_name=~"$model_name"}[5m]))
                   seriesNameFormat: 'Avg generation tokens'
 
+    # ===== REQUEST SIZING =====
+    "prompt_tokens_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Prompt Tokens (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le) (
+                        rate(vllm:request_prompt_tokens_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "generation_tokens_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Generation Tokens (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le) (
+                        rate(vllm:request_generation_tokens_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "max_generation_tokens_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Max Generation Tokens (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le) (
+                        rate(vllm:request_max_num_generation_tokens_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "params_max_tokens_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Request Max Tokens (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le) (
+                        rate(vllm:request_params_max_tokens_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "params_n_avg":
+      kind: Panel
+      spec:
+        display:
+          name: Request Params n (Avg)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum(rate(vllm:request_params_n_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum(rate(vllm:request_params_n_count{model_name=~"$model_name"}[5m]))
+
+    "prefill_kv_tokens_avg":
+      kind: Panel
+      spec:
+        display:
+          name: Prefill KV Computed Tokens (Avg)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum(rate(vllm:request_prefill_kv_computed_tokens_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum(rate(vllm:request_prefill_kv_computed_tokens_count{model_name=~"$model_name"}[5m]))
+
+    "iteration_tokens_avg":
+      kind: Panel
+      spec:
+        display:
+          name: Iteration Tokens (Avg)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum(rate(vllm:iteration_tokens_total_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum(rate(vllm:iteration_tokens_total_count{model_name=~"$model_name"}[5m]))
+
   layouts:
     - kind: Grid
       spec:
@@ -562,3 +736,44 @@ spec:
             width: 12
             height: 6
             content: { $ref: '#/spec/panels/generation_tokens_hist' }
+
+    - kind: Grid
+      spec:
+        display:
+          title: Request Sizing
+        items:
+          - x: 0
+            y: 30
+            width: 4
+            height: 3
+            content: { $ref: '#/spec/panels/prompt_tokens_p95' }
+          - x: 4
+            y: 30
+            width: 4
+            height: 3
+            content: { $ref: '#/spec/panels/generation_tokens_p95' }
+          - x: 8
+            y: 30
+            width: 4
+            height: 3
+            content: { $ref: '#/spec/panels/max_generation_tokens_p95' }
+          - x: 12
+            y: 30
+            width: 4
+            height: 3
+            content: { $ref: '#/spec/panels/params_max_tokens_p95' }
+          - x: 16
+            y: 30
+            width: 4
+            height: 3
+            content: { $ref: '#/spec/panels/params_n_avg' }
+          - x: 20
+            y: 30
+            width: 4
+            height: 3
+            content: { $ref: '#/spec/panels/prefill_kv_tokens_avg' }
+          - x: 0
+            y: 33
+            width: 6
+            height: 3
+            content: { $ref: '#/spec/panels/iteration_tokens_avg' }
