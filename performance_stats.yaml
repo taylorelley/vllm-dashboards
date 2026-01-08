@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersesDashboard
 metadata:
-  name: performance-statistics
+  name: performance-statistics-enhanced
   project: vllm
 spec:
   display:
-    name: vLLM Performance Statistics
+    name: vLLM Performance Statistics ENHANCED
 
   variables:
     - kind: ListVariable

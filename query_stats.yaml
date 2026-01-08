@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersesDashboard
 metadata:
-  name: query-statistics
+  name: query-statistics-enhanced
   project: vllm
 spec:
   display:
-    name: vLLM Query Statistics
+    name: vLLM Query Statistics ENHANCED
 
   variables:
     - kind: ListVariable
