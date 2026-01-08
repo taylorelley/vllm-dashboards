@@ -1,11 +1,13 @@
-apiVersion: v1
-kind: PersesDashboard
+kind: "Dashboard"
 metadata:
-  name: performance-statistics
+  name: performance-statistics-enhanced
+  createdAt: 0001-01-01T00:00:00Z
+  updatedAt: 0001-01-01T00:00:00Z
+  version: 0
   project: vllm
 spec:
   display:
-    name: vLLM Performance Statistics
+    name: vLLM Performance Statistics ENHANCED
 
   variables:
     - kind: ListVariable
@@ -519,6 +521,330 @@ spec:
                     sum by (model_name) (vllm:num_requests_waiting{model_name=~"$model_name"})
                   seriesNameFormat: '{{model_name}}'
 
+    # ===== LATENCY BREAKDOWN =====
+    "latency_breakdown_chart":
+      kind: Panel
+      spec:
+        display:
+          name: Request Latency Breakdown (Average)
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            legend:
+              mode: table
+              position: bottom
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum by (model_name) (rate(vllm:request_queue_time_seconds_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum by (model_name) (rate(vllm:request_queue_time_seconds_count{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}} queue'
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum by (model_name) (rate(vllm:request_prefill_time_seconds_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum by (model_name) (rate(vllm:request_prefill_time_seconds_count{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}} prefill'
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum by (model_name) (rate(vllm:request_decode_time_seconds_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum by (model_name) (rate(vllm:request_decode_time_seconds_count{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}} decode'
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum by (model_name) (rate(vllm:request_inference_time_seconds_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum by (model_name) (rate(vllm:request_inference_time_seconds_count{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}} inference'
+
+    "queue_latency_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Queue Latency (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+            format:
+              unit: seconds
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le, model_name) (
+                        rate(vllm:request_queue_time_seconds_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "prefill_latency_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Prefill Latency (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+            format:
+              unit: seconds
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le, model_name) (
+                        rate(vllm:request_prefill_time_seconds_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "decode_latency_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Decode Latency (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+            format:
+              unit: seconds
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le, model_name) (
+                        rate(vllm:request_decode_time_seconds_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    "inference_latency_p95":
+      kind: Panel
+      spec:
+        display:
+          name: Inference Latency (P95)
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+            format:
+              unit: seconds
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le, model_name) (
+                        rate(vllm:request_inference_time_seconds_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+
+    # ===== INTER-TOKEN LATENCY =====
+    "inter_token_latency_chart":
+      kind: Panel
+      spec:
+        display:
+          name: Inter-Token Latency (Average & P95)
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            legend:
+              mode: table
+              position: bottom
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum by (model_name) (rate(vllm:inter_token_latency_seconds_sum{model_name=~"$model_name"}[5m]))
+                    /
+                    sum by (model_name) (rate(vllm:inter_token_latency_seconds_count{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}} avg'
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    histogram_quantile(
+                      0.95,
+                      sum by (le, model_name) (
+                        rate(vllm:inter_token_latency_seconds_bucket{model_name=~"$model_name"}[5m])
+                      )
+                    )
+                  seriesNameFormat: '{{model_name}} p95'
+
+    # ===== CACHE EFFICIENCY =====
+    "prefix_cache_hit_rate":
+      kind: Panel
+      spec:
+        display:
+          name: Prefix Cache Hit Rate
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            legend:
+              mode: table
+              position: bottom
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    (
+                      sum by (model_name) (rate(vllm:prefix_cache_hits_total{model_name=~"$model_name"}[5m]))
+                      /
+                      sum by (model_name) (rate(vllm:prefix_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    ) or on() vector(0)
+                  seriesNameFormat: '{{model_name}} prefix'
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    (
+                      sum by (model_name) (rate(vllm:external_prefix_cache_hits_total{model_name=~"$model_name"}[5m]))
+                      /
+                      sum by (model_name) (rate(vllm:external_prefix_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    ) or on() vector(0)
+                  seriesNameFormat: '{{model_name}} external prefix'
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    (
+                      sum by (model_name) (rate(vllm:mm_cache_hits_total{model_name=~"$model_name"}[5m]))
+                      /
+                      sum by (model_name) (rate(vllm:mm_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    ) or on() vector(0)
+                  seriesNameFormat: '{{model_name}} MM'
+
+    "preemptions_rate":
+      kind: Panel
+      spec:
+        display:
+          name: Preemptions (per sec)
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            legend:
+              mode: table
+              position: bottom
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: |
+                    sum by (model_name) (rate(vllm:num_preemptions_total{model_name=~"$model_name"}[5m]))
+                  seriesNameFormat: '{{model_name}}'
+
+    "engine_sleep_state":
+      kind: Panel
+      spec:
+        display:
+          name: Engine Sleep State
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last-number
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  datasource:
+                    kind: PrometheusDatasource
+                    name: prometheus
+                  query: avg(vllm:engine_sleep_state{model_name=~"$model_name"})
+
   layouts:
     - kind: Grid
       spec:
@@ -634,3 +960,66 @@ spec:
             width: 8
             height: 6
             content: { $ref: '#/spec/panels/waiting_requests' }
+
+    - kind: Grid
+      spec:
+        display:
+          title: Latency Breakdown
+        items:
+          - x: 0
+            y: 30
+            width: 12
+            height: 6
+            content: { $ref: '#/spec/panels/latency_breakdown_chart' }
+          - x: 12
+            y: 30
+            width: 3
+            height: 3
+            content: { $ref: '#/spec/panels/queue_latency_p95' }
+          - x: 15
+            y: 30
+            width: 3
+            height: 3
+            content: { $ref: '#/spec/panels/prefill_latency_p95' }
+          - x: 18
+            y: 30
+            width: 3
+            height: 3
+            content: { $ref: '#/spec/panels/decode_latency_p95' }
+          - x: 21
+            y: 30
+            width: 3
+            height: 3
+            content: { $ref: '#/spec/panels/inference_latency_p95' }
+
+    - kind: Grid
+      spec:
+        display:
+          title: Inter-Token Latency
+        items:
+          - x: 0
+            y: 36
+            width: 24
+            height: 6
+            content: { $ref: '#/spec/panels/inter_token_latency_chart' }
+
+    - kind: Grid
+      spec:
+        display:
+          title: Cache Efficiency & Preemptions
+        items:
+          - x: 0
+            y: 42
+            width: 12
+            height: 6
+            content: { $ref: '#/spec/panels/prefix_cache_hit_rate' }
+          - x: 12
+            y: 42
+            width: 6
+            height: 6
+            content: { $ref: '#/spec/panels/preemptions_rate' }
+          - x: 18
+            y: 42
+            width: 6
+            height: 6
+            content: { $ref: '#/spec/panels/engine_sleep_state' }
