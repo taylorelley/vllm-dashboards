@@ -762,9 +762,11 @@ spec:
                     kind: PrometheusDatasource
                     name: prometheus
                   query: |
-                    sum by (model_name) (rate(vllm:prefix_cache_hits_total{model_name=~"$model_name"}[5m]))
-                    /
-                    sum by (model_name) (rate(vllm:prefix_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    (
+                      sum by (model_name) (rate(vllm:prefix_cache_hits_total{model_name=~"$model_name"}[5m]))
+                      /
+                      sum by (model_name) (rate(vllm:prefix_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    ) or on() vector(0)
                   seriesNameFormat: '{{model_name}} prefix'
           - kind: TimeSeriesQuery
             spec:
@@ -775,9 +777,11 @@ spec:
                     kind: PrometheusDatasource
                     name: prometheus
                   query: |
-                    sum by (model_name) (rate(vllm:external_prefix_cache_hits_total{model_name=~"$model_name"}[5m]))
-                    /
-                    sum by (model_name) (rate(vllm:external_prefix_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    (
+                      sum by (model_name) (rate(vllm:external_prefix_cache_hits_total{model_name=~"$model_name"}[5m]))
+                      /
+                      sum by (model_name) (rate(vllm:external_prefix_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    ) or on() vector(0)
                   seriesNameFormat: '{{model_name}} external prefix'
           - kind: TimeSeriesQuery
             spec:
@@ -788,9 +792,11 @@ spec:
                     kind: PrometheusDatasource
                     name: prometheus
                   query: |
-                    sum by (model_name) (rate(vllm:mm_cache_hits_total{model_name=~"$model_name"}[5m]))
-                    /
-                    sum by (model_name) (rate(vllm:mm_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    (
+                      sum by (model_name) (rate(vllm:mm_cache_hits_total{model_name=~"$model_name"}[5m]))
+                      /
+                      sum by (model_name) (rate(vllm:mm_cache_queries_total{model_name=~"$model_name"}[5m]))
+                    ) or on() vector(0)
                   seriesNameFormat: '{{model_name}} MM'
 
     "preemptions_rate":

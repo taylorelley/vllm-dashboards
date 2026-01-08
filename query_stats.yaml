@@ -40,6 +40,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -60,6 +62,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -80,6 +84,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -100,6 +106,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -451,6 +459,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -477,6 +487,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -503,6 +515,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -529,6 +543,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -555,6 +571,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -578,6 +596,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
@@ -601,6 +621,8 @@ spec:
           kind: StatChart
           spec:
             calculation: last-number
+            format:
+              unit: null
         queries:
           - kind: TimeSeriesQuery
             spec:
